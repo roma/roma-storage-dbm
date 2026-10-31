@@ -1,3 +1,5 @@
+require "roma/storage/dbm/version"
+
 require 'gdbm'
 require 'roma/storage/basic_storage'
 
