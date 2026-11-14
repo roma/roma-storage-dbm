@@ -20,27 +20,14 @@ module Roma
         @ext_name = 'dbm'
       end
 
-      def each_clean_up(t, vnhash)
-        @do_clean_up = true
-        nt = Time.now.to_i
-        @hdb.each{ |hdb|
-          delkey = []
-          hdb.each{ |k, v|
-            return unless @do_clean_up
-            vn, last, clk, expt = unpack_header(v)
-            vn_stat = vnhash[vn]
-            if vn_stat == :primary && ( (expt != 0 && nt > expt) || (expt == 0 && t > last) )
-              delkey << [vn, k, v]
-            elsif vn_stat == nil && t > last
-              delkey << [vn, k, v]
-            end
-            sleep @each_clean_up_sleep
-          }
-          delkey.each{ |vn, k, v|
-            yield k, vn
-            hdb.out(k) if hdb.get(k) == v
-          }
-        }
+      # Yields the keys that the database has when it starts: deleting a key
+      # while GDBM iterates may skip others. A key deleted meanwhile is
+      # skipped.
+      def each_record(hdb)
+        hdb.keys.each do |k|
+          v = hdb[k]
+          yield k, v if v
+        end
       end
 
       private
